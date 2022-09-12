@@ -7,8 +7,11 @@
 (2) [TB6600 Stepper Controllers](https://www.amazon.com/UsongShine-Stepper-Controller-Arduino-Printer/dp/B07HHS14VQ)
 
 (1) [ELP VGA Super Mini VGA USB Camera Module 100deg](https://www.amazon.com/dp/B01DRG250Q)
+
 (1) [White LED String Light](https://www.amazon.com/Waterproof-Operated-Decoration-Christmas-Holiday/dp/B01837ULSC)
+
 (1) [4K ohm resistor](https://www.amazon.com/dp/B0185FHL30)
+
 (1) [Threaded Insert Kit](https://www.amazon.com/Hilitchi-Threaded-Embedment-Printing-Assortment/dp/B08Z86Z85R)
 
 Alternatively, you can use buy just the sized you need:
