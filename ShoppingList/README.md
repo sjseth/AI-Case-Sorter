@@ -1,12 +1,13 @@
 # AI-Case-Sorter
 
-(2) Nema17 Stepper Motors 1.5A: [](https://www.amazon.com/STEPPERONLINE-Stepper-63-74oz-Connector-Extruder/dp/B07LF898KN)
-(1) Arduino Nano [](https://www.amazon.com/DWEII-ATmega328P-Compatible-Arduino-Unsoldered/dp/B09VKTPPZR)
-(2) TB6600 Stepper Controllers [](https://www.amazon.com/UsongShine-Stepper-Controller-Arduino-Printer/dp/B07HHS14VQ)
+(2) [Nema17 Stepper Motors 1.5A](https://www.amazon.com/STEPPERONLINE-Stepper-63-74oz-Connector-Extruder/dp/B07LF898KN)
+(1) [Arduino Nano](https://www.amazon.com/DWEII-ATmega328P-Compatible-Arduino-Unsoldered/dp/B09VKTPPZR)
+(2) [TB6600 Stepper Controllers](https://www.amazon.com/UsongShine-Stepper-Controller-Arduino-Printer/dp/B07HHS14VQ)
 (1) ELP VGA Super Mini VGA USB Camera Module 100deg [](https://www.amazon.com/dp/B01DRG250Q)
 (1) White LED String Light [](https://www.amazon.com/Waterproof-Operated-Decoration-Christmas-Holiday/dp/B01837ULSC)
 (1) ~4K ohm resistor [](https://www.amazon.com/dp/B0185FHL30)
 (1) Threaded Insert Kit [](https://www.amazon.com/Hilitchi-Threaded-Embedment-Printing-Assortment/dp/B08Z86Z85R)
+
 Alternatively, you can use buy just the sized you need:
 - m3x6x5 [](https://www.amazon.com/Hilitchi-Threaded-Embedment-Printing-Assortment/dp/B08Z89R4HP)
 - m5x8x7 [](https://www.amazon.com/Hilitchi-Threaded-Embedment-Printing-Assortment/dp/B08Z89Q6F7)
