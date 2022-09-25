@@ -1,5 +1,3 @@
-
-#include <AccelStepper.h>
 #include <Wire.h>
 #include <SoftwareSerial.h>
 
