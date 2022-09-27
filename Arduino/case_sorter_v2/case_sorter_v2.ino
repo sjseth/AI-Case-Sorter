@@ -1,13 +1,15 @@
 #include <Wire.h>
 #include <SoftwareSerial.h>
 
+//sends 5v to stepper enable, pul and dir pins
+#define TBPOWERPIN 10
 
 //TB6600 PINS (STEPPIN IS PUL+ ON TB6000)
 //Stepper controller is set to 32 Microsteps
 #define FEED_DIRPIN 8
 #define FEED_STEPPIN 9  
 #define FEED_TB6600Enable 2
-#define FEED_MICROSTEPS 32
+#define FEED_MICROSTEPS 36
 
 
 #define SORT_MICROSTEPS 32 
@@ -17,37 +19,38 @@
 
 #define SORTER_CHUTE_SEPERATION 20 //number of steps between chutes
 
-//motor movement settings for feeder
-int indexSteps = 5;
-int microSteps = 1;
-int feedCycleSteps = indexSteps * FEED_MICROSTEPS * -1;
-
-
-int sorterMotorCurrentPosition = 0;
+//not used but could be if you wanted to specify exact positions. 
+//referenced in the commented out code in the run sorter method
 int sorterChutes[] ={0,17, 33, 49, 66, 83, 99, 116, 132}; 
 
 
-//inputs
-int feedSpeed = 60; //range: 1..100
+//inputs which can be set via serial console like:  feedspeed:50 or sortspeed:60
+int feedSpeed = 50; //range: 1..100
 int feedSteps = 100; //range: 1..1000
 int sortSpeed = 60; //range: 1..100
 int sortSteps = 20; //range: 1..500 //20 default
-int feedPauseTime = 50; //range: 1.2000
+int feedPauseTime = 100; //range: 1.2000
 
+
+//tracking variables
+int sorterMotorCurrentPosition = 0;
 
 void setup() {
   Serial.begin(9600);
+  
+  pinMode(TBPOWERPIN, OUTPUT);
+  digitalWrite(TBPOWERPIN, HIGH);
   pinMode(FEED_TB6600Enable, OUTPUT);
   pinMode(SORT_TB6600Enable, OUTPUT);
-   pinMode(FEED_DIRPIN, OUTPUT);
+  pinMode(FEED_DIRPIN, OUTPUT);
   pinMode(FEED_STEPPIN, OUTPUT);
-  digitalWrite(FEED_TB6600Enable, LOW);
+  digitalWrite(FEED_TB6600Enable, HIGH);
   digitalWrite(SORT_TB6600Enable, LOW);
-
+  digitalWrite(FEED_DIRPIN, HIGH);
 }
 
 void loop() {
-
+digitalWrite(TBPOWERPIN, HIGH);
     if(Serial.available() > 0 )  
     {
       
@@ -136,9 +139,13 @@ void loop() {
 //moves the sorter arm. Blocking operation until complete
 void runSorterMotor(int chute){
 
+   //you can uncomment to use the array sorterChutes for exact positions of each slot
    //int newStepsPos = sorterChutes[chute]; //the steps position from zero of the "slot"
-   
+
+   //rather than use exact positions, we are assuming uniform seperation betweeen slots specified by sorter_chute_seperation constant
    int newStepsPos = chute * SORTER_CHUTE_SEPERATION;
+
+   //calculate the amount of movement and move.
    int nextmovement = newStepsPos - sorterMotorCurrentPosition; //the number of +-steps between current position and next position
    int movement = nextmovement * SORT_MICROSTEPS; //calculate the number of microsteps required
    
@@ -146,23 +153,23 @@ void runSorterMotor(int chute){
    sorterMotorCurrentPosition = newStepsPos;
 }
 
-
 void runFeedMotorManual(){
   
   int steps=0;
-  digitalWrite(FEED_DIRPIN, HIGH);
+  
+  digitalWrite(FEED_DIRPIN, LOW);
+  
   steps = abs(feedSteps) * FEED_MICROSTEPS;
-  Serial.print(steps);
-  int delayTime = 120 - feedSpeed;
-  Serial.print(delayTime);
+  
+  int delayTime = 120 - feedSpeed; //assuming a feedspeed variable between 0 and 100. a delay of less than 20ms is too fast so 20mcs should be minimum delay for fastest speed.
+  
   for(int i=0;i<steps;i++){
       digitalWrite(FEED_STEPPIN, HIGH);
-      delayMicroseconds(60  );   //pulse
+      delayMicroseconds(60);   //pulse. i have found 60 to be very consistent with tb6600. Noticed that faster pulses tend to drop steps. 
       digitalWrite(FEED_STEPPIN, LOW);
       delayMicroseconds(delayTime); //speed 156 = 1 second per revolution
   }
   delay(feedPauseTime);
-  Serial.print("pause");
   
   for(int i=0;i<steps;i++){
       digitalWrite(FEED_STEPPIN, HIGH);
@@ -170,7 +177,7 @@ void runFeedMotorManual(){
       digitalWrite(FEED_STEPPIN, LOW);
       delayMicroseconds(delayTime); //speed 156 = 1 second per revolution
   }
-  //Serial.print(steps);Serial.print("\n");
+ 
 }
 
 
