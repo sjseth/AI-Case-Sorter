@@ -1,7 +1,7 @@
 #include <Wire.h>
 #include <SoftwareSerial.h>
 
-//sends 5v to stepper enable, pul and dir pins
+//sends 5v to stepper enable, pul and dir pins 
 #define TBPOWERPIN 10
 
 //TB6600 PINS (STEPPIN IS PUL+ ON TB6000)
@@ -9,7 +9,7 @@
 #define FEED_DIRPIN 8
 #define FEED_STEPPIN 9  
 #define FEED_TB6600Enable 2
-#define FEED_MICROSTEPS 36
+#define FEED_MICROSTEPS 32
 
 
 #define SORT_MICROSTEPS 32 
@@ -23,6 +23,11 @@
 //referenced in the commented out code in the run sorter method
 int sorterChutes[] ={0,17, 33, 49, 66, 83, 99, 116, 132}; 
 
+//if your sorter design has a queue, you will set this value to your queue length. 
+//a queue would be like a rotary wheel where the currently recognized brass isn't going to fall for 3 more positions
+#define QUEUE_LENGTH 1
+#define PRINT_QUEUEINFO false  //used for debugging in serial monitor. prints queue info
+int sorterQueue[QUEUE_LENGTH];
 
 //inputs which can be set via serial console like:  feedspeed:50 or sortspeed:60
 int feedSpeed = 50; //range: 1..100
@@ -128,10 +133,13 @@ digitalWrite(TBPOWERPIN, HIGH);
 
       
       int sortPosition = input.toInt();
-      runSorterMotor(sortPosition);
+      QueueAdd(sortPosition);
+      
+      runSorterMotor(QueueFetch());
       runFeedMotorManual();
       delay(100);//allow for vibrations to calm down for clear picture
       Serial.print("done\n");
+      PrintQueue();
     }
 
 }
@@ -180,7 +188,6 @@ void runFeedMotorManual(){
  
 }
 
-
 void runSortMotorManual(int steps){
   int delayTime = 120 - sortSpeed;
      
@@ -197,4 +204,32 @@ void runSortMotorManual(int steps){
       delayMicroseconds(delayTime); //speed 156 = 1 second per revolution //def 20
   }
   //Serial.print(steps);Serial.print("\n");
+}
+
+void PrintQueue(){
+  if(PRINT_QUEUEINFO == false)
+    return;
+    Serial.print("-------\n");
+
+  Serial.print("QueueStatus:\n");
+      
+          for (int i=0;i < QUEUE_LENGTH;i++){
+            if(i>0)
+              Serial.print(',');
+            Serial.print(sorterQueue[i]);
+          }
+          
+          Serial.print("\nSorting to: ");
+          Serial.print(QueueFetch());
+          Serial.print("\n-------\n");
+}
+void QueueAdd(int pos){
+  for(int i = QUEUE_LENGTH;i>0;i--){
+    sorterQueue[i] = sorterQueue[i-1];
+  }
+  sorterQueue[0]=pos;
+}
+  
+int QueueFetch(){
+  return sorterQueue[QUEUE_LENGTH -1];
 }
