@@ -1,16 +1,15 @@
 #include <Wire.h>
 #include <SoftwareSerial.h>
 
-//sends 5v to stepper enable, pul and dir pins 
-#define TBPOWERPIN 10
+//sends 5v to stepper enable, pul and dir pins if unable to use 5v pin on  arduino
+#define TBPOWERPIN 1
 
-//TB6600 PINS (STEPPIN IS PUL+ ON TB6000)
+//TB6600 PINS (STEPPIN IS PUL- ON TB6000)
 //Stepper controller is set to 32 Microsteps
 #define FEED_DIRPIN 8
 #define FEED_STEPPIN 9  
 #define FEED_TB6600Enable 2
 #define FEED_MICROSTEPS 32
-
 
 #define SORT_MICROSTEPS 32 
 #define SORT_DIRPIN 5
@@ -20,25 +19,37 @@
 #define SORTER_CHUTE_SEPERATION 20 //number of steps between chutes
 
 //not used but could be if you wanted to specify exact positions. 
-//referenced in the commented out code in the run sorter method
+//referenced in the commented out code in the runsorter method below
 int sorterChutes[] ={0,17, 33, 49, 66, 83, 99, 116, 132}; 
 
 //if your sorter design has a queue, you will set this value to your queue length. 
-//a queue would be like a rotary wheel where the currently recognized brass isn't going to fall for 3 more positions
-#define QUEUE_LENGTH 1
+//example of a queue would be like a rotary wheel where the currently recognized brass isn't going to fall into sorter for 3 more positions
+#define QUEUE_LENGTH 1 //usually 1 but it is the positional distance between your camera and the sorter.
 #define PRINT_QUEUEINFO false  //used for debugging in serial monitor. prints queue info
 int sorterQueue[QUEUE_LENGTH];
 
 //inputs which can be set via serial console like:  feedspeed:50 or sortspeed:60
 int feedSpeed = 50; //range: 1..100
-int feedSteps = 100; //range: 1..1000
+int feedStepsA= 100; //range 1..1000 
+int feedStepsB = 100; //range: 1..1000 . Used with oddFeed = true. This allows every other feed to use a differnent number of steps. 
+bool oddFeed = false; //used for those situations where there is a fractional step. ie 33.5 steps between positions. you could use feedStepsA as 33 and feedStepsB as 34 to give you average of 33.5 steps. 
+bool twoPartFeed = true;
+
 int sortSpeed = 60; //range: 1..100
 int sortSteps = 20; //range: 1..500 //20 default
-int feedPauseTime = 100; //range: 1.2000
+int feedPauseTime = 100; //range: 1.2000 //if you feed has two parts (back, forth), this is the pause time between the two parts. 
 
+//FEED STEP OVERRIDES
+//These settings override the feedstepsa&b and oddFeed settings above.
+//If feedStepsA & B are too coarse, you can directly calculate the microsteps needed between feed positions and use that here.
+int feedMicroSteps = 0; // how many microsteps between feeds - 0 to disable.
+int feedFactionalStep = 1; //this allows you to add a micro step every [fractionInterval]. 
+int feedFractionInterval = 3; //the interval at which micro steps get added. 
+//END FEED STEP OVERRIDES
 
 //tracking variables
 int sorterMotorCurrentPosition = 0;
+
 
 void setup() {
   Serial.begin(9600);
@@ -64,71 +75,10 @@ digitalWrite(TBPOWERPIN, HIGH);
       //normal input would just be the tray # you want to sort to which would be something like "1\n" or "9\n" (\n)if you are using serial console, the \n is already included in the writeline
       //so just the number 1-10 would suffice. 
       //the software on the other end should be listening for  "done\n". 
-      
-      //set feed speed. Values 1-100. Def 60
-      if(input.startsWith("feedspeed:")){
-         input.replace("feedspeed:","");
-         feedSpeed= input.toInt();
-          Serial.print("ok\n");
-         return;
-      }
-      
-      //set sort speed. Values 1-100. Def 60
-      if(input.startsWith("sortspeed:")){
-         input.replace("sortspeed:","");
-         sortSpeed= input.toInt();
-          Serial.print("ok\n");
-         return;
-      }
 
-      //set sort steps. Values 1-100. Def 20
-      if(input.startsWith("sortsteps:")){
-         input.replace("sortsteps:","");
-         sortSteps= input.toInt();
-          Serial.print("ok\n");
-         return;
-      }
-
-      //set feed steps. Values 1-1000. Def 100
-      if(input.startsWith("feedsteps:")){
-         input.replace("feedsteps:","");
-         feedSteps= input.toInt();
-          Serial.print("ok\n");
-         return;
-      }
-
-      //set feed steps. Values 1-1000. Def 100
-      if(input.startsWith("feedpausetime:")){
-         input.replace("feedpausetime:","");
-         feedPauseTime= input.toInt();
-          Serial.print("ok\n");
-         return;
-      }
-
-      //to change sorter arm position, send x1, x2.. x10, etc. 
-      if(input.startsWith("x")){
-         input.replace("x","");
-         int msortsteps= input.toInt();
-         //runSorterMotorSteps(msortsteps);
-         runSortMotorManual(msortsteps);
-         Serial.print("done\n");
-         return;
-      }
-      
-      //to run feeder, send  any string starting with f:
-       if(input.startsWith("f")){
-         input.replace("f","");
-         runFeedMotorManual();
-         Serial.print("done\n");
-         return;
-      }
-      
-      //to run feeder, send  any string starting with f:
-       if(input.startsWith("f")){
-         input.replace("f","");
-         runFeedMotorManual();
-         Serial.print("done\n");
-         return;
+      //if true was returned, we go to next looping, else we continue down below
+      if(parseSerialInput(input) == true){
+        return;
       }
 
       
@@ -161,13 +111,38 @@ void runSorterMotor(int chute){
    sorterMotorCurrentPosition = newStepsPos;
 }
 
+int fractionIntervalIndex =0;
+
 void runFeedMotorManual(){
-  
   int steps=0;
-  
+
+  //if the feedMicroSteps override is used, we do that and return.
+  if(feedMicroSteps>0){
+    steps = feedMicroSteps;
+    if(fractionIntervalIndex == feedFractionInterval){
+      steps= steps + feedFactionalStep;
+      fractionIntervalIndex=0;
+    }else{
+       fractionIntervalIndex++;
+    }  
+    runFeedMotor(steps);
+    return;
+  }
+
+ 
   digitalWrite(FEED_DIRPIN, LOW);
-  
-  steps = abs(feedSteps) * FEED_MICROSTEPS;
+
+  //if oddFeed is true, we figure out if we are on a or b steps
+  int curFeedSteps = abs(feedStepsA);
+  if(oddFeed == true){
+   curFeedSteps = abs(feedStepsB);
+    oddFeed = false;
+  }else{
+    oddFeed = true;
+  }
+
+   //calculate the steps based on microsteps. 
+  steps = curFeedSteps * FEED_MICROSTEPS;
   
   int delayTime = 120 - feedSpeed; //assuming a feedspeed variable between 0 and 100. a delay of less than 20ms is too fast so 20mcs should be minimum delay for fastest speed.
   
@@ -177,16 +152,36 @@ void runFeedMotorManual(){
       digitalWrite(FEED_STEPPIN, LOW);
       delayMicroseconds(delayTime); //speed 156 = 1 second per revolution
   }
-  delay(feedPauseTime);
-  
-  for(int i=0;i<steps;i++){
-      digitalWrite(FEED_STEPPIN, HIGH);
-      delayMicroseconds(60);   //pulse
-      digitalWrite(FEED_STEPPIN, LOW);
-      delayMicroseconds(delayTime); //speed 156 = 1 second per revolution
+  if(twoPartFeed==true){
+    delay(feedPauseTime); //this is the delay between the forward and backward motions of a feed. 
+   
+    for(int i=0;i<steps;i++){
+        digitalWrite(FEED_STEPPIN, HIGH);
+        delayMicroseconds(60);   //pulse
+        digitalWrite(FEED_STEPPIN, LOW);
+        delayMicroseconds(delayTime); //speed 156 = 1 second per revolution
+    }
   }
  
 }
+
+void runFeedMotor(int steps){
+
+  digitalWrite(FEED_DIRPIN, LOW);
+ 
+  int delayTime = 120 - feedSpeed; //assuming a feedspeed variable between 0 and 100. a delay of less than 20ms is too fast so 20mcs should be minimum delay for fastest speed.
+  
+  for(int i=0;i<steps;i++){
+      digitalWrite(FEED_STEPPIN, HIGH);
+      delayMicroseconds(60);   //pulse. i have found 60 to be very consistent with tb6600. Noticed that faster pulses tend to drop steps. 
+      digitalWrite(FEED_STEPPIN, LOW);
+      delayMicroseconds(delayTime); //speed 156 = 1 second per revolution
+  }
+  
+ 
+}
+
+
 
 void runSortMotorManual(int steps){
   int delayTime = 120 - sortSpeed;
@@ -206,30 +201,119 @@ void runSortMotorManual(int steps){
   //Serial.print(steps);Serial.print("\n");
 }
 
-void PrintQueue(){
-  if(PRINT_QUEUEINFO == false)
-    return;
-    Serial.print("-------\n");
 
-  Serial.print("QueueStatus:\n");
-      
-          for (int i=0;i < QUEUE_LENGTH;i++){
-            if(i>0)
-              Serial.print(',');
-            Serial.print(sorterQueue[i]);
-          }
-          
-          Serial.print("\nSorting to: ");
-          Serial.print(QueueFetch());
-          Serial.print("\n-------\n");
+//used for debugging queue issues. 
+void PrintQueue(){
+    if(PRINT_QUEUEINFO == false)
+      return;
+    Serial.print("-------\n");
+    Serial.print("QueueStatus:\n");
+    for (int i=0;i < QUEUE_LENGTH;i++){
+      if(i>0)
+        Serial.print(',');
+      Serial.print(sorterQueue[i]);
+    }
+    Serial.print("\nSorting to: ");
+    Serial.print(QueueFetch());
+    Serial.print("\n-------\n");
 }
+
+//adds a position item into the front of the sorting queue. Queue is used in FIFO mode. PUSH
 void QueueAdd(int pos){
   for(int i = QUEUE_LENGTH;i>0;i--){
     sorterQueue[i] = sorterQueue[i-1];
   }
   sorterQueue[0]=pos;
 }
-  
+
+//fetches items from back of queue. POP
 int QueueFetch(){
   return sorterQueue[QUEUE_LENGTH -1];
+}
+
+//return true if you wish to stop processing and continue to next loop
+bool parseSerialInput(String input)
+{
+      //set feed speed. Values 1-100. Def 60
+      if(input.startsWith("feedspeed:")){
+         input.replace("feedspeed:","");
+         feedSpeed= input.toInt();
+          Serial.print("ok\n");
+         return true;
+      }
+      
+      //used to test tracking on steppers for feed motor. specify the number of feeds to perform: eg:  "test:60" will feed 60 times. 
+      if(input.startsWith("test:")){
+         input.replace("test:","");
+         int testcount = input.toInt();
+         for(int a=0;a<testcount;a++)
+         {
+           runFeedMotorManual();
+            Serial.print(a);
+            Serial.print("\n");
+          delay(60);
+         }
+         Serial.print("ok\n");
+         return true;
+      }
+      
+      //set sort speed. Values 1-100. Def 60
+      if(input.startsWith("sortspeed:")){
+         input.replace("sortspeed:","");
+         sortSpeed= input.toInt();
+          Serial.print("ok\n");
+         return true;
+      }
+
+      //set sort steps. Values 1-100. Def 20
+      if(input.startsWith("sortsteps:")){
+         input.replace("sortsteps:","");
+         sortSteps= input.toInt();
+          Serial.print("ok\n");
+         return true;
+      }
+
+      //set feed steps. Values 1-1000. Def 100
+      if(input.startsWith("feedsteps:")){
+         input.replace("feedsteps:","");
+         feedStepsA= input.toInt();
+          Serial.print("ok\n");
+         return true;
+      }
+      //set feed steps b. Values 1-1000. Def 100
+      if(input.startsWith("feedstepsb:")){
+         input.replace("feedstepsb:","");
+         feedStepsB= input.toInt();
+          Serial.print("ok\n");
+         return true;
+      }
+
+      //set feed steps. Values 1-1000. Def 100
+      if(input.startsWith("feedpausetime:")){
+         input.replace("feedpausetime:","");
+         feedPauseTime= input.toInt();
+          Serial.print("ok\n");
+         return true;
+      }
+
+      //to change sorter arm position, send x1, x2.. x10, etc. 
+      if(input.startsWith("s")){
+         input.replace("s","");
+         int msortsteps= input.toInt();
+         //runSorterMotorSteps(msortsteps);
+         runSortMotorManual(msortsteps);
+         Serial.print("done\n");
+         return true;
+      }
+      
+      //to run feeder, send  any string starting with f:
+       if(input.startsWith("f")){
+         input.replace("f","");
+         int fs=input.toInt();
+         runFeedMotor(fs);
+         Serial.print("done\n");
+         return true;
+      }
+
+      return false; //nothing matched, continue processing the loop at normal
 }
