@@ -10,11 +10,15 @@
 #define FEED_STEPPIN 9  
 #define FEED_TB6600Enable 2
 #define FEED_MICROSTEPS 32
+#define FEED_HOMING_SENSOR 7
 
 #define SORT_MICROSTEPS 32 
 #define SORT_DIRPIN 5
 #define SORT_STEPPIN 6
 #define SORT_TB6600Enable 4
+
+#define AUTOHOMING false
+
 
 #define SORTER_CHUTE_SEPERATION 20 //number of steps between chutes
 
@@ -34,6 +38,7 @@ int feedStepsA= 100; //range 1..1000
 int feedStepsB = 100; //range: 1..1000 . Used with oddFeed = true. This allows every other feed to use a differnent number of steps. 
 bool oddFeed = false; //used for those situations where there is a fractional step. ie 33.5 steps between positions. you could use feedStepsA as 33 and feedStepsB as 34 to give you average of 33.5 steps. 
 bool twoPartFeed = true;
+bool isHomed=true;
 
 int sortSpeed = 60; //range: 1..100
 int sortSteps = 20; //range: 1..500 //20 default
@@ -53,7 +58,7 @@ int sorterMotorCurrentPosition = 0;
 
 void setup() {
   Serial.begin(9600);
-  
+   pinMode(FEED_HOMING_SENSOR, INPUT); 
   pinMode(TBPOWERPIN, OUTPUT);
   digitalWrite(TBPOWERPIN, HIGH);
   pinMode(FEED_TB6600Enable, OUTPUT);
@@ -63,6 +68,7 @@ void setup() {
   digitalWrite(FEED_TB6600Enable, HIGH);
   digitalWrite(SORT_TB6600Enable, LOW);
   digitalWrite(FEED_DIRPIN, HIGH);
+ 
 }
 
 void loop() {
@@ -88,10 +94,29 @@ digitalWrite(TBPOWERPIN, HIGH);
       runSorterMotor(QueueFetch());
       runFeedMotorManual();
       delay(100);//allow for vibrations to calm down for clear picture
+      checkHoming(true);
       Serial.print("done\n");
       PrintQueue();
     }
 
+}
+
+void checkHoming(bool autoHome){
+
+    if(autoHome ==true && AUTOHOMING==false)
+      return;
+
+   int homingSensorVal = digitalRead(FEED_HOMING_SENSOR);
+   if(homingSensorVal ==1){
+    return; //we are homed! Continue
+   }
+
+   int i=0; //safety valve..
+   while(homingSensorVal == 0 && i<100000){
+      runFeedMotor(1);
+      i++;
+   }
+  
 }
 
 //moves the sorter arm. Blocking operation until complete
@@ -302,6 +327,12 @@ bool parseSerialInput(String input)
          int msortsteps= input.toInt();
          //runSorterMotorSteps(msortsteps);
          runSortMotorManual(msortsteps);
+         Serial.print("done\n");
+         return true;
+      }
+       //home the feeder
+       if(input.startsWith("home")){
+         checkHoming(false);
          Serial.print("done\n");
          return true;
       }
