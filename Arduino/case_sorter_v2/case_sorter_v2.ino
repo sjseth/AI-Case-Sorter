@@ -2,7 +2,7 @@
 #include <SoftwareSerial.h>
 
 //sends 5v to stepper enable, pul and dir pins if unable to use 5v pin on  arduino
-#define TBPOWERPIN 1
+#define TBPOWERPIN 10
 
 //TB6600 PINS (STEPPIN IS PUL- ON TB6000)
 //Stepper controller is set to 32 Microsteps
@@ -17,9 +17,6 @@
 #define SORT_STEPPIN 6
 #define SORT_TB6600Enable 4
 
-#define AUTOHOMING false
-
-
 #define SORTER_CHUTE_SEPERATION 20 //number of steps between chutes
 
 //not used but could be if you wanted to specify exact positions. 
@@ -32,13 +29,16 @@ int sorterChutes[] ={0,17, 33, 49, 66, 83, 99, 116, 132};
 #define PRINT_QUEUEINFO false  //used for debugging in serial monitor. prints queue info
 int sorterQueue[QUEUE_LENGTH];
 
+
+bool autoHoming = false; //if true, then homing will be checked and adjusted on each feed cycle. Requires homing sensor.
+
 //inputs which can be set via serial console like:  feedspeed:50 or sortspeed:60
-int feedSpeed = 50; //range: 1..100
-int feedStepsA= 100; //range 1..1000 
-int feedStepsB = 100; //range: 1..1000 . Used with oddFeed = true. This allows every other feed to use a differnent number of steps. 
+int feedSpeed = 70; //range: 1..100
+int feedStepsA= 40; //range 1..1000 
+int feedStepsB = 40; //range: 1..1000 . Used with oddFeed = true. This allows every other feed to use a differnent number of steps. 
 bool oddFeed = false; //used for those situations where there is a fractional step. ie 33.5 steps between positions. you could use feedStepsA as 33 and feedStepsB as 34 to give you average of 33.5 steps. 
 bool twoPartFeed = true;
-bool isHomed=true;
+
 
 int sortSpeed = 60; //range: 1..100
 int sortSteps = 20; //range: 1..500 //20 default
@@ -54,13 +54,15 @@ int feedFractionInterval = 3; //the interval at which micro steps get added.
 
 //tracking variables
 int sorterMotorCurrentPosition = 0;
-
+bool isHomed=true;
 
 void setup() {
+  
   Serial.begin(9600);
    pinMode(FEED_HOMING_SENSOR, INPUT); 
   pinMode(TBPOWERPIN, OUTPUT);
   digitalWrite(TBPOWERPIN, HIGH);
+
   pinMode(FEED_TB6600Enable, OUTPUT);
   pinMode(SORT_TB6600Enable, OUTPUT);
   pinMode(FEED_DIRPIN, OUTPUT);
@@ -72,7 +74,8 @@ void setup() {
 }
 
 void loop() {
-digitalWrite(TBPOWERPIN, HIGH);
+
+
     if(Serial.available() > 0 )  
     {
       
@@ -100,20 +103,33 @@ digitalWrite(TBPOWERPIN, HIGH);
     }
 
 }
-
+void testHomingSensor(){
+  for(int i=0; i < 500;i++){
+    digitalWrite(TBPOWERPIN, HIGH);
+    int value=digitalRead(FEED_HOMING_SENSOR);
+    Serial.print(value);
+    Serial.print("\n");
+    //Serial.print(analogRead(FEED_HOMING_SENSOR));
+    //Serial.print("\n");
+    delay(50);
+    }
+  
+  }
 void checkHoming(bool autoHome){
 
-    if(autoHome ==true && AUTOHOMING==false)
+    if(autoHome ==true && autoHoming==false)
       return;
 
    int homingSensorVal = digitalRead(FEED_HOMING_SENSOR);
+    Serial.print(homingSensorVal);
    if(homingSensorVal ==1){
     return; //we are homed! Continue
    }
 
    int i=0; //safety valve..
-   while(homingSensorVal == 0 && i<100000){
+   while(homingSensorVal == 0 && i<12000){
       runFeedMotor(1);
+      homingSensorVal = digitalRead(FEED_HOMING_SENSOR);
       i++;
    }
   
@@ -321,6 +337,15 @@ bool parseSerialInput(String input)
          return true;
       }
 
+       //set feed steps. Values 1-1000. Def 100
+      if(input.startsWith("autohome:")){
+         input.replace("autohome:","");
+         input.replace(" ", "");
+          autoHoming = input == "1";
+          Serial.print("ok\n");
+         return true;
+      }
+
       //to change sorter arm position, send x1, x2.. x10, etc. 
       if(input.startsWith("s")){
          input.replace("s","");
@@ -333,6 +358,11 @@ bool parseSerialInput(String input)
        //home the feeder
        if(input.startsWith("home")){
          checkHoming(false);
+         Serial.print("done\n");
+         return true;
+      }
+        if(input.startsWith("testhome")){
+         testHomingSensor();
          Serial.print("done\n");
          return true;
       }
