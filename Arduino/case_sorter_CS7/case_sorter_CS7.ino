@@ -9,7 +9,7 @@
 #define FEED_DIRPIN 8
 #define FEED_STEPPIN 9  
 #define FEED_TB6600Enable 2
-#define FEED_MICROSTEPS 32
+#define FEED_MICROSTEPS 16
 #define FEED_HOMING_SENSOR 7
 
 #define SORT_MICROSTEPS 32 
@@ -34,20 +34,15 @@ bool autoHoming = false; //if true, then homing will be checked and adjusted on 
 
 //inputs which can be set via serial console like:  feedspeed:50 or sortspeed:60
 int feedSpeed = 60; //range: 1..100
-int feedStepsA= 80; //range 1..1000 
-int feedStepsB = 0; //range: 1..1000 . Used with oddFeed = true. This allows every other feed to use a differnent number of steps. 
-bool useOddFeed = false;
-bool oddFeed = false; //used for those situations where there is a fractional step. ie 33.5 steps between positions. you could use feedStepsA as 33 and feedStepsB as 34 to give you average of 33.5 steps. 
-bool twoPartFeed = false;
-
+int feedSteps= 40; //range 1..1000 
 
 int sortSpeed = 50; //range: 1..100
 int sortSteps = 20; //range: 1..500 //20 default
 int feedPauseTime = 0; //range: 1.2000 //if you feed has two parts (back, forth), this is the pause time between the two parts. 
 
 //FEED STEP OVERRIDES
-//These settings override the feedstepsa&b and oddFeed settings above.
-//If feedStepsA & B are too coarse, you can directly calculate the microsteps needed between feed positions and use that here.
+//These settings override the feedSteps&b and oddFeed settings above.
+//If feedSteps & B are too coarse, you can directly calculate the microsteps needed between feed positions and use that here.
 int feedMicroSteps = 0; // how many microsteps between feeds - 0 to disable.
 int feedFactionalStep = 1; //this allows you to add a micro step every [fractionInterval]. 
 int feedFractionInterval = 3; //the interval at which micro steps get added. 
@@ -60,7 +55,8 @@ bool isHomed=true;
 void setup() {
   
   Serial.begin(9600);
-   pinMode(FEED_HOMING_SENSOR, INPUT); 
+  
+  pinMode(FEED_HOMING_SENSOR, INPUT); 
   pinMode(TBPOWERPIN, OUTPUT);
   digitalWrite(TBPOWERPIN, HIGH);
 
@@ -95,10 +91,8 @@ void loop() {
       }
 
 
-      
       int sortPosition = input.toInt();
       QueueAdd(sortPosition);
-      
       runSorterMotor(QueueFetch());
       runFeedMotorManual();
      
@@ -109,14 +103,15 @@ void loop() {
     }
 
 }
+
+//polls the homing sensor for about 10 seconds
 void testHomingSensor(){
   for(int i=0; i < 500;i++){
     digitalWrite(TBPOWERPIN, HIGH);
     int value=digitalRead(FEED_HOMING_SENSOR);
     Serial.print(value);
     Serial.print("\n");
-    //Serial.print(analogRead(FEED_HOMING_SENSOR));
-    //Serial.print("\n");
+   
     delay(50);
     }
   
@@ -176,19 +171,9 @@ void runFeedMotorManual(){
     return;
   }
 
- 
-  digitalWrite(FEED_DIRPIN, LOW);
+   digitalWrite(FEED_DIRPIN, LOW);
 
-  //if oddFeed is true, we figure out if we are on a or b steps
-  int curFeedSteps = abs(feedStepsA);
-
-  
-  if(oddFeed == true && useOddFeed==true){
-   curFeedSteps = abs(feedStepsB);
-    oddFeed = false;
-  }else{
-    oddFeed = true;
-  }
+  int curFeedSteps = abs(feedSteps);
 
    //calculate the steps based on microsteps. 
   steps = curFeedSteps * FEED_MICROSTEPS;
@@ -200,16 +185,6 @@ void runFeedMotorManual(){
       delayMicroseconds(60);   //pulse. i have found 60 to be very consistent with tb6600. Noticed that faster pulses tend to drop steps. 
       digitalWrite(FEED_STEPPIN, LOW);
       delayMicroseconds(delayTime); //speed 156 = 1 second per revolution
-  }
-  if(twoPartFeed==true){
-    delay(feedPauseTime); //this is the delay between the forward and backward motions of a feed. 
-   
-    for(int i=0;i<steps;i++){
-        digitalWrite(FEED_STEPPIN, HIGH);
-        delayMicroseconds(60);   //pulse
-        digitalWrite(FEED_STEPPIN, LOW);
-        delayMicroseconds(delayTime); //speed 156 = 1 second per revolution
-    }
   }
  
 }
@@ -248,7 +223,7 @@ void runSortMotorManual(int steps){
       digitalWrite(SORT_STEPPIN, LOW);
       delayMicroseconds(delayTime); //speed 156 = 1 second per revolution //def 20
   }
-  //Serial.print(steps);Serial.print("\n");
+
 }
 
 
@@ -326,14 +301,7 @@ bool parseSerialInput(String input)
       //set feed steps. Values 1-1000. Def 100
       if(input.startsWith("feedsteps:")){
          input.replace("feedsteps:","");
-         feedStepsA= input.toInt();
-          Serial.print("ok\n");
-         return true;
-      }
-      //set feed steps b. Values 1-1000. Def 100
-      if(input.startsWith("feedstepsb:")){
-         input.replace("feedstepsb:","");
-         feedStepsB= input.toInt();
+         feedSteps= input.toInt();
           Serial.print("ok\n");
          return true;
       }
