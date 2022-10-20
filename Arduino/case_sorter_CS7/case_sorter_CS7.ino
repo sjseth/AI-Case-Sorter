@@ -9,7 +9,7 @@
 #define FEED_DIRPIN 8
 #define FEED_STEPPIN 9  
 #define FEED_TB6600Enable 2
-#define FEED_MICROSTEPS 16
+#define FEED_MICROSTEPS 32
 #define FEED_HOMING_SENSOR 7
 
 #define SORT_MICROSTEPS 32 
@@ -34,7 +34,7 @@ bool autoHoming = false; //if true, then homing will be checked and adjusted on 
 
 //inputs which can be set via serial console like:  feedspeed:50 or sortspeed:60
 int feedSpeed = 60; //range: 1..100
-int feedSteps= 40; //range 1..1000 
+int feedSteps= 80; //range 1..1000 
 
 int sortSpeed = 50; //range: 1..100
 int sortSteps = 20; //range: 1..500 //20 default
@@ -177,7 +177,7 @@ void runFeedMotorManual(){
 
    //calculate the steps based on microsteps. 
   steps = curFeedSteps * FEED_MICROSTEPS;
-  
+  Serial.print(steps);
   int delayTime = 120 - feedSpeed; //assuming a feedspeed variable between 0 and 100. a delay of less than 20ms is too fast so 20mcs should be minimum delay for fastest speed.
   
   for(int i=0;i<steps;i++){
