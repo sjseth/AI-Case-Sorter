@@ -9,6 +9,8 @@
 (1) [ELP VGA Super Mini VGA USB Camera Module 100deg](https://www.amazon.com/dp/B01DRG250Q)
 
 (1) [White LED String Light](https://www.amazon.com/Waterproof-Operated-Decoration-Christmas-Holiday/dp/B01837ULSC)
+OR
+(1) [White 4000k LED Strip Light (BETTER)](https://www.amazon.com/gp/product/B08X1LK54Z)
 
 (1) [4K ohm resistor](https://www.amazon.com/dp/B0185FHL30)
 
@@ -32,3 +34,5 @@ or:
 or: 
 - (1) 5.55x25.4 extension spring
 - (1) 9.1x34.9 compression spring
+
+(1) [Micro Limit Switch](https://www.amazon.com/gp/product/B07PCN6T6F)
