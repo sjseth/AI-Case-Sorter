@@ -177,7 +177,7 @@ void runFeedMotorManual(){
 
    //calculate the steps based on microsteps. 
   steps = curFeedSteps * FEED_MICROSTEPS;
-  Serial.print(steps);
+ // Serial.print(steps);
   int delayTime = 120 - feedSpeed; //assuming a feedspeed variable between 0 and 100. a delay of less than 20ms is too fast so 20mcs should be minimum delay for fastest speed.
   
   for(int i=0;i<steps;i++){
@@ -208,7 +208,7 @@ void runFeedMotor(int steps){
 
 
 void runSortMotorManual(int steps){
-  Serial.print(steps);
+  // Serial.print(steps);
   int delayTime = 120 - sortSpeed;
      
   if(steps>0){
