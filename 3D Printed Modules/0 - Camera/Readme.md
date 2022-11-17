@@ -10,13 +10,22 @@ The cameras is a USB camera module with a 100 degree lense, be sure you purchase
 
 
 ## Camera Body 
-It is reccomended that the camera body is printed without the use of supports because it is very dificult to remove support material from the threads. 
+Print with supports only touching base and support overhange angle at 80 degrees. This will prevent supports from getting in the threads. 
+If using Cura Slicer, use these support settings: 
+
+* Support Structure: Normal,  
+* Support Placement: Touching Buildplate, 
+* Support Overhang Angle: 80.0, 
+* Support Wall Line count: 0
+
 
 ## Camera Nut
-Again this should be placed flat on the build plate and printed without supports. 
+This should be placed flat on the build plate and printed without supports. 
 
 ## Camera Module Lid
 Should be printed with the flat part down with supports on to suport the clips. 
+If you are getting breakage at the clips or poor layer adhesion, you can print this part on its side with supports for greater strength. 
+Recommend use of PLA+ for this part. 
 
 
 [Amazon-link]: <https://www.amazon.com/dp/B01DRG250Qdcwxa>
