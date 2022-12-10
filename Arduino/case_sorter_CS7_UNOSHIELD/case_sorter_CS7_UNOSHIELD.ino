@@ -9,7 +9,8 @@
 #define FEED_STEPPIN 2  
 #define FEED_TB6600Enable 8
 #define FEED_MICROSTEPS 16
-#define FEED_HOMING_SENSOR 7
+#define FEED_HOMING_SENSOR 10
+#define HOMING_SENSOR_POWER 9
 
 #define SORT_MICROSTEPS 16 
 #define SORT_DIRPIN 6
@@ -29,13 +30,13 @@ int sorterChutes[] ={0,17, 33, 49, 66, 83, 99, 116, 132};
 int sorterQueue[QUEUE_LENGTH];
 
 
-bool autoHoming = false; //if true, then homing will be checked and adjusted on each feed cycle. Requires homing sensor.
+bool autoHoming = true; //if true, then homing will be checked and adjusted on each feed cycle. Requires homing sensor.
 
 //inputs which can be set via serial console like:  feedspeed:50 or sortspeed:60
 int feedSpeed = 30; //range: 1..100
-int feedSteps= 80; //range 1..1000 
+int feedSteps= 70; //range 1..1000 
 
-int sortSpeed = 30; //range: 1..100
+int sortSpeed = 10; //range: 1..100
 int sortSteps = 20; //range: 1..500 //20 default
 int feedPauseTime = 0; //range: 1.2000 //if you feed has two parts (back, forth), this is the pause time between the two parts. 
 
@@ -54,12 +55,13 @@ int feedFractionInterval = 3; //the interval at which micro steps get added.
 //tracking variables
 int sorterMotorCurrentPosition = 0;
 bool isHomed=true;
+int homingOffset = 7;
 
 void setup() {
   
   Serial.begin(9600);
   
-  pinMode(FEED_HOMING_SENSOR, INPUT); 
+ 
 
 
   pinMode(FEED_TB6600Enable, OUTPUT);
@@ -69,6 +71,10 @@ void setup() {
    pinMode(SORT_DIRPIN, OUTPUT);
   pinMode(SORT_STEPPIN, OUTPUT);
   
+  pinMode(FEED_HOMING_SENSOR, INPUT); 
+  pinMode(HOMING_SENSOR_POWER, OUTPUT);
+  digitalWrite(HOMING_SENSOR_POWER, HIGH);
+  
   digitalWrite(FEED_TB6600Enable, HIGH);
   digitalWrite(SORT_TB6600Enable, HIGH);
   digitalWrite(FEED_DIRPIN, HIGH);
@@ -76,7 +82,7 @@ void setup() {
 }
 
 void loop() {
-
+ digitalWrite(HOMING_SENSOR_POWER, HIGH);
 
     if(Serial.available() > 0 )  
     {
@@ -130,10 +136,17 @@ void checkHoming(bool autoHome){
    }
 
    int i=0; //safety valve..
-   while(homingSensorVal == 0 && i<12000){
+   int offset = homingOffset * FEED_MICROSTEPS;
+   while((homingSensorVal == 0 && i<12000) || offset >0){
       runFeedMotor(1);
+      //delay(2);
       homingSensorVal = digitalRead(FEED_HOMING_SENSOR);
       i++;
+      if(homingSensorVal==1){
+        offset--;
+       // delay(10);
+        
+      }
    }
   
 }
