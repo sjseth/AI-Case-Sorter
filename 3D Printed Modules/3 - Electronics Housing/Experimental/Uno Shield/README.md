@@ -15,6 +15,6 @@ The code for the Arduino Uno with motor shield is here:
 
 #Other Resources
 
-[Link to CNC Shield Manual](https://www.zyltech.com/arduino-cnc-shield-instructions/)
-[2.54mm Connector Kit](https://www.amazon.com/Glarks-Connector-Housing-Compatible-Assortment/dp/B07CTHCG5T)
-[2.54 Crimper tool](https://www.amazon.com/gp/product/B088NQV8Z3)
+* [Link to CNC Shield Manual](https://www.zyltech.com/arduino-cnc-shield-instructions/)
+* [2.54mm Connector Kit](https://www.amazon.com/Glarks-Connector-Housing-Compatible-Assortment/dp/B07CTHCG5T)
+* [2.54 Crimper tool](https://www.amazon.com/gp/product/B088NQV8Z3)
