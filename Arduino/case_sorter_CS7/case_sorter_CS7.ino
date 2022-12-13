@@ -51,6 +51,7 @@ int feedFractionInterval = 3; //the interval at which micro steps get added.
 //tracking variables
 int sorterMotorCurrentPosition = 0;
 bool isHomed=true;
+int homingOffset = 0; //number of steps to continue after homing sensor is triggered. 
 
 void setup() {
   
@@ -128,11 +129,20 @@ void checkHoming(bool autoHome){
    }
 
    int i=0; //safety valve..
-   while(homingSensorVal == 0 && i<12000){
+  int offset = homingOffset * FEED_MICROSTEPS;
+   while((homingSensorVal == 0 && i<12000) || offset >0){
       runFeedMotor(1);
+      //delay(2); //uncomment to slow down the rough homing stage
       homingSensorVal = digitalRead(FEED_HOMING_SENSOR);
       i++;
+     
+      if(homingSensorVal==1){
+        offset--;
+       // delay(10); //uncomment to slow down the fine homing stage
+        
+      }
    }
+  
   
 }
 
