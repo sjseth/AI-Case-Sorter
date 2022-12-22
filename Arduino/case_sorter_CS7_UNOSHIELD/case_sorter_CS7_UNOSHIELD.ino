@@ -7,7 +7,7 @@
 //Stepper controller is set to 16 Microsteps (3 jumpers in place)
 #define FEED_DIRPIN 5
 #define FEED_STEPPIN 2  
-#define FEED_TB6600Enable 8
+#define FEED_Enable 8
 #define FEED_MICROSTEPS 16
 #define FEED_HOMING_SENSOR 10
 #define HOMING_SENSOR_POWER 9
@@ -15,7 +15,7 @@
 #define SORT_MICROSTEPS 16 
 #define SORT_DIRPIN 6
 #define SORT_STEPPIN 3
-#define SORT_TB6600Enable 8
+#define SORT_Enable 8
 
 #define SORTER_CHUTE_SEPERATION 20 //number of steps between chutes
 
@@ -61,22 +61,19 @@ void setup() {
   
   Serial.begin(9600);
   
- 
-
-
-  pinMode(FEED_TB6600Enable, OUTPUT);
-  pinMode(SORT_TB6600Enable, OUTPUT);
+  pinMode(FEED_Enable, OUTPUT);
+  pinMode(SORT_Enable, OUTPUT);
   pinMode(FEED_DIRPIN, OUTPUT);
   pinMode(FEED_STEPPIN, OUTPUT);
-   pinMode(SORT_DIRPIN, OUTPUT);
+  pinMode(SORT_DIRPIN, OUTPUT);
   pinMode(SORT_STEPPIN, OUTPUT);
   
   pinMode(FEED_HOMING_SENSOR, INPUT); 
   pinMode(HOMING_SENSOR_POWER, OUTPUT);
   digitalWrite(HOMING_SENSOR_POWER, HIGH);
   
-  digitalWrite(FEED_TB6600Enable, HIGH);
-  digitalWrite(SORT_TB6600Enable, HIGH);
+  digitalWrite(FEED_Enable, HIGH);
+  digitalWrite(SORT_Enable, HIGH);
   digitalWrite(FEED_DIRPIN, HIGH);
  
 }
@@ -130,7 +127,7 @@ void checkHoming(bool autoHome){
       return;
 
    int homingSensorVal = digitalRead(FEED_HOMING_SENSOR);
-    Serial.print(homingSensorVal);
+   // Serial.print(homingSensorVal);
    if(homingSensorVal ==1){
     return; //we are homed! Continue
    }
