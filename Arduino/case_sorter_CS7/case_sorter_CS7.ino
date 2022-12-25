@@ -333,11 +333,18 @@ bool parseSerialInput(String input)
          return true;
       }
 
-      //to change sorter arm position, send x1, x2.. x10, etc. 
-      if(input.startsWith("s")){
-         input.replace("s","");
+      //to change sorter arm position, send sortto:1, sortto:2.. 10, etc. 
+       if(input.startsWith("sortto:")){
+         input.replace("sortto:","");
          int msortsteps= input.toInt();
-         //runSorterMotorSteps(msortsteps);
+         runSorterMotor(msortsteps);
+         Serial.print("done\n");
+         return true;
+      }
+      //to change sorter arm position by steps.
+      if(input.startsWith("sorttosteps:")){
+         input.replace("sorttosteps:","");
+         int msortsteps= input.toInt();
          runSortMotorManual(msortsteps);
          Serial.print("done\n");
          return true;

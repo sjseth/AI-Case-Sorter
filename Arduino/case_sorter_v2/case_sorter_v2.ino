@@ -127,7 +127,7 @@ void checkHoming(bool autoHome){
       return;
 
    int homingSensorVal = digitalRead(FEED_HOMING_SENSOR);
-    Serial.print(homingSensorVal);
+    //Serial.print(homingSensorVal);
    if(homingSensorVal ==1){
     return; //we are homed! Continue
    }
@@ -233,7 +233,7 @@ void runFeedMotor(int steps){
 
 
 void runSortMotorManual(int steps){
-  Serial.print(steps);
+ // Serial.print(steps);
   int delayTime = 120 - sortSpeed;
      
   if(steps>0){
@@ -355,11 +355,18 @@ bool parseSerialInput(String input)
          return true;
       }
 
-      //to change sorter arm position, send x1, x2.. x10, etc. 
-      if(input.startsWith("s")){
-         input.replace("s","");
+      //to change sorter arm position by slot number. 
+         if(input.startsWith("sortto:")){
+         input.replace("sortto:","");
          int msortsteps= input.toInt();
-         //runSorterMotorSteps(msortsteps);
+         runSorterMotor(msortsteps);
+         Serial.print("done\n");
+         return true;
+      }
+      //to change sorter arm position by steps.
+      if(input.startsWith("sorttosteps:")){
+         input.replace("sorttosteps:","");
+         int msortsteps= input.toInt();
          runSortMotorManual(msortsteps);
          Serial.print("done\n");
          return true;
