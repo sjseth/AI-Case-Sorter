@@ -55,7 +55,7 @@ int feedFractionInterval = 3; //the interval at which micro steps get added.
 //tracking variables
 int sorterMotorCurrentPosition = 0;
 bool isHomed=true;
-int homingOffset = 7;
+int homingOffset = 0;
 
 void setup() {
   
@@ -286,6 +286,7 @@ bool parseSerialInput(String input)
          for(int a=0;a<testcount;a++)
          {
            runFeedMotorManual();
+           checkHoming(true);
             Serial.print(a);
             Serial.print("\n");
           delay(60);
