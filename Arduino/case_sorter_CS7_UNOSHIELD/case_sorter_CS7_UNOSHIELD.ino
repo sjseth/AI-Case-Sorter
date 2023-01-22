@@ -373,6 +373,13 @@ bool parseSerialInput(String input)
          Serial.print("done\n");
          return true;
       }
+       if(input.startsWith("getconfig")){
+       char buffer[1000];
+
+        sprintf(buffer, "{\"FeedMotorSpeed\":%i, \"FeedCycleSteps\":%i , \"SortMotorSpeed\": %i, \"SortSteps\":%i}\n", feedSpeed, feedSteps, sortSpeed, sortSteps);
+        Serial.print(buffer);
+         return true;
+      }
 
       return false; //nothing matched, continue processing the loop at normal
 }
