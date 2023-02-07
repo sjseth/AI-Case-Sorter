@@ -202,19 +202,14 @@ void runFeedMotorManual(){
 }
 
 void runFeedMotor(int steps){
-
   digitalWrite(FEED_DIRPIN, LOW);
- 
   int delayTime = motorPulseDelay - feedSpeed; //assuming a feedspeed variable between 0 and 100. a delay of less than 20ms is too fast so 20mcs should be minimum delay for fastest speed.
-  
   for(int i=0;i<steps;i++){
       digitalWrite(FEED_STEPPIN, HIGH);
       delayMicroseconds(60);   //pulse. i have found 60 to be very consistent with tb6600. Noticed that faster pulses tend to drop steps. 
       digitalWrite(FEED_STEPPIN, LOW);
       delayMicroseconds(delayTime); //speed 156 = 1 second per revolution
   }
-  
- 
 }
 
 
@@ -374,11 +369,20 @@ bool parseSerialInput(String input)
          return true;
       }
        if(input.startsWith("getconfig")){
-       char buffer[1000];
-
-        sprintf(buffer, "{\"FeedMotorSpeed\":%i, \"FeedCycleSteps\":%i , \"SortMotorSpeed\": %i, \"SortSteps\":%i}\n", feedSpeed, feedSteps, sortSpeed, sortSteps);
-        Serial.print(buffer);
-         return true;
+          Serial.print("{\"FeedMotorSpeed\":");
+          Serial.print(feedSpeed);
+  
+          Serial.print(",\"FeedCycleSteps\":");
+          Serial.print(feedSteps);
+  
+          Serial.print(",\"SortMotorSpeed\":");
+          Serial.print(sortSpeed);
+  
+          Serial.print(",\"SortSteps\":");
+          Serial.print(sortSteps);
+  
+          Serial.print("}\n");
+          return true;
       }
 
       return false; //nothing matched, continue processing the loop at normal
