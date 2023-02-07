@@ -30,11 +30,11 @@ int sorterChutes[] ={0,17, 33, 49, 66, 83, 99, 116, 132};
 int sorterQueue[QUEUE_LENGTH];
 
 
-bool autoHoming = false; //if true, then homing will be checked and adjusted on each feed cycle. Requires homing sensor.
+bool autoHoming = true; //if true, then homing will be checked and adjusted on each feed cycle. Requires homing sensor.
 
 //inputs which can be set via serial console like:  feedspeed:50 or sortspeed:60
 int feedSpeed = 60; //range: 1..100
-int feedSteps= 80; //range 1..1000 
+int feedSteps= 70; //range 1..1000 
 
 int sortSpeed = 50; //range: 1..100
 int sortSteps = 20; //range: 1..500 //20 default
@@ -71,6 +71,7 @@ void setup() {
   digitalWrite(FEED_TB6600Enable, HIGH);
   digitalWrite(SORT_TB6600Enable, HIGH);
   digitalWrite(FEED_DIRPIN, HIGH);
+ // Serial.print("Ready\n");
  
 }
 
@@ -123,7 +124,7 @@ void checkHoming(bool autoHome){
       return;
 
    int homingSensorVal = digitalRead(FEED_HOMING_SENSOR);
-    Serial.print(homingSensorVal);
+    //Serial.print(homingSensorVal);
    if(homingSensorVal ==1){
     return; //we are homed! Continue
    }
@@ -305,6 +306,13 @@ bool parseSerialInput(String input)
          input.replace("sortsteps:","");
          sortSteps= input.toInt();
           Serial.print("ok\n");
+         return true;
+      }
+
+       if(input.startsWith("getconfig")){
+        // input.replace("get:","");
+         //sortSteps= input.toInt();
+          Serial.print("{}\n");
          return true;
       }
 
