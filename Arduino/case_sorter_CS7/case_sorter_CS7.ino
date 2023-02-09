@@ -71,7 +71,7 @@ void setup() {
   digitalWrite(FEED_TB6600Enable, HIGH);
   digitalWrite(SORT_TB6600Enable, HIGH);
   digitalWrite(FEED_DIRPIN, HIGH);
- // Serial.print("Ready\n");
+  Serial.print("Ready\n");
  
 }
 
