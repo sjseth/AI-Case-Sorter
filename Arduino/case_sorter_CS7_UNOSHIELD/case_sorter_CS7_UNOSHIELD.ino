@@ -109,7 +109,7 @@ void loop() {
       runFeedMotorManual();
      
       checkHoming(true);
-     // delay(100);//allow for vibrations to calm down for clear picture
+      delay(100);//allow for vibrations to calm down for clear picture
       Serial.print("done\n");
       PrintQueue();
     }
