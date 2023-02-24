@@ -40,7 +40,7 @@ int sorterQueue[QUEUE_LENGTH];
 
 //inputs which can be set via serial console like:  feedspeed:50 or sortspeed:60
 int feedSpeed = 75; //range: 1..100
-int feedSteps= 60; //range 1..1000 
+int feedSteps= 60; //range 1..1000 . If using autohoming, 60 is a good value,otherwise, it should be set to 80.
 
 int sortSpeed = 85; //range: 1..100
 int sortSteps = 20; //range: 1..500 //20 default
