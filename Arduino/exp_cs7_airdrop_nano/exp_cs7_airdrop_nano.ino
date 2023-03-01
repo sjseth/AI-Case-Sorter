@@ -52,7 +52,7 @@ int feedPauseTime = 0; //range: 1.2000 //if you feed has two parts (back, forth)
 
 //used to calculate motor speeds and works in conjunction with microsteps.  
 //480 for 8 microsteps, 240 for 16, 120 for 32, 
-int motorPulseDelay = 240;
+int motorPulseDelay = 120;
 
 //FEED STEP OVERRIDES
 //These settings override the feedSteps&b and oddFeed settings above.
