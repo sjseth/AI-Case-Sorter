@@ -95,7 +95,7 @@ void setup() {
   digitalWrite(FEED_DIRPIN, HIGH);
 
 
-  Serial.write("Ready\n");
+  Serial.print("Ready\n");
  
 }
 
