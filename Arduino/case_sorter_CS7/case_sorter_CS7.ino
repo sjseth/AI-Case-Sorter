@@ -87,7 +87,7 @@ void setup() {
   digitalWrite(SORT_Enable, HIGH);
   digitalWrite(FEED_DIRPIN, HIGH);
 
-  Serial.write("Ready\n");
+  Serial.print("Ready\n");
  
 }
 
