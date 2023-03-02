@@ -330,16 +330,24 @@ bool parseSerialInput(String input)
       }
       
       //used to test tracking on steppers for feed motor. specify the number of feeds to perform: eg:  "test:60" will feed 60 times. 
-      if(input.startsWith("test:")){
+       if(input.startsWith("test:")){
          input.replace("test:","");
          int testcount = input.toInt();
+         int slot=0;
          for(int a=0;a<testcount;a++)
          {
-           runFeedMotorManual();
-           checkHoming(true);
+           slot=random(0,5);
             Serial.print(a);
+            Serial.print(" - ");
+            Serial.print(slot);
+          //  dropTimerDiff = millis() - dropTimer;
+            runSorterMotor(slot);
+          //  dropTimer = millis();
+            runFeedMotorManual();
+            checkHoming(true);
             Serial.print("\n");
-          delay(60);
+            delay(60);
+         
          }
          Serial.print("ok\n");
          return true;
