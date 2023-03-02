@@ -1,3 +1,5 @@
+### Version CS 7.0.230302-US ###
+
 #include <Wire.h>
 #include <SoftwareSerial.h>
 
@@ -86,7 +88,7 @@ void setup() {
   digitalWrite(SORT_Enable, HIGH);
   digitalWrite(FEED_DIRPIN, HIGH);
 
-  Serial.write("Ready\n");
+  Serial.print("Ready\n");
  
 }
 
