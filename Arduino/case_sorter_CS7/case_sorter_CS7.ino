@@ -1,3 +1,5 @@
+### VERSION CS 7.0.230302 ###
+
 #include <Wire.h>
 #include <SoftwareSerial.h>
 
