@@ -1,4 +1,4 @@
-### Version CS 2.0.230302 ###
+/// Version CS 2.0.230302 ///
 
 #include <Wire.h>
 #include <SoftwareSerial.h>
