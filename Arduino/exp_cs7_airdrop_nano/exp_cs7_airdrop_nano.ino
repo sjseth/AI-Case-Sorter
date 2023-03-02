@@ -24,7 +24,7 @@
 
 
 #define FEED_DONE_SIGNAL 3 // Writes HIGH Signal When Feed is done
-int feedDoneSignalTime = 100; //The amount of time in MS to send the feed done signal;
+int feedDoneSignalTime = 50; //The amount of time in MS to send the feed done signal;
 
 
 bool useFeedSensor = false; //this is a proximity sensor under the feed tube which tells us a case has dropped completely 
