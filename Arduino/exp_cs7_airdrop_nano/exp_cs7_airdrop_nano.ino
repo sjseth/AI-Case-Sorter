@@ -1,4 +1,4 @@
-/// Version CS 7.0.230302-AD ///
+/// Version CS 7.0.230303-AD ///
 
 #include <Wire.h>
 #include <SoftwareSerial.h>
@@ -24,12 +24,30 @@
 
 
 #define FEED_DONE_SIGNAL 3 // Writes HIGH Signal When Feed is done
-int feedDoneSignalTime = 50; //The amount of time in MS to send the feed done signal;
+int feedDoneSignalTime = 100; //The amount of time in MS to send the feed done signal;
 
 
 bool useFeedSensor = false; //this is a proximity sensor under the feed tube which tells us a case has dropped completely 
 bool autoHoming = true; //if true, then homing will be checked and adjusted on each feed cycle. Requires homing sensor.
 int homingOffset = 5;
+
+
+
+
+//acceleration settings
+bool useAcceleration = true;
+int upslope = 2 * SORT_MICROSTEPS;
+int downslope = 2 * SORT_MICROSTEPS;
+ 
+int accelerationFactor = 1400; //the top delay value when ramping. somewhere between 1000 and 2000 seems to work well.
+int rampFactor = accelerationFactor / 100 ; //the ramp delay microseconds to add/remove per step; should be roughly accelerationfactor / 50
+int sortTestDelay=150; //stop delay time in between sorts in test mode
+//end acceleration settins
+
+
+
+int pulsewidth = 10;
+
 
 //not used but could be if you wanted to specify exact positions. 
 //referenced in the commented out code in the runsorter method below
@@ -45,16 +63,12 @@ int sorterQueue[QUEUE_LENGTH];
 
 
 //inputs which can be set via serial console like:  feedspeed:50 or sortspeed:60
-int feedSpeed = 75; //range: 1..100
+int feedSpeed = 98; //range: 1..100
 int feedSteps= 60; //range 1..1000 . If using autohoming, 60 is a good value,otherwise, it should be set to 80.
 
-int sortSpeed = 85; //range: 1..100
+int sortSpeed = 94; //range: 1..100
 int sortSteps = 20; //range: 1..500 //20 default
-int feedPauseTime = 0; //range: 1.2000 //if you feed has two parts (back, forth), this is the pause time between the two parts. 
 
-//used to calculate motor speeds and works in conjunction with microsteps.  
-//480 for 8 microsteps, 240 for 16, 120 for 32, 
-int motorPulseDelay = 120;
 
 //FEED STEP OVERRIDES
 //These settings override the feedSteps&b and oddFeed settings above.
@@ -71,6 +85,7 @@ int sorterMotorCurrentPosition = 0;
 bool isHomed=true;
 int sorterMotorSpeed = 500; //this is default and calculated at runtime. do not change this value
 int feedMotorSpeed = 500; //this is default and calculated at runtime. do not change this value
+int stepTracker = 0;
 
 void setup() {
   
@@ -128,6 +143,7 @@ void loop() {
       checkHoming(true);
       feedDone(); //this is called for testing air solenoid on drop
       Serial.print("done\n");
+      
       PrintQueue();
     }
 
@@ -189,7 +205,12 @@ void runSorterMotor(int chute){
    int nextmovement = newStepsPos - sorterMotorCurrentPosition; //the number of +-steps between current position and next position
    int movement = nextmovement * SORT_MICROSTEPS; //calculate the number of microsteps required
    
-   runSortMotorManual(movement);
+   
+   if(useAcceleration){
+      runSortMotorManualAcc(movement);
+   }else{
+     runSortMotorManual(movement);
+   }
    sorterMotorCurrentPosition = newStepsPos;
 }
 
@@ -222,11 +243,10 @@ void runFeedMotorManual(){
   //calculate the steps based on microsteps. 
   steps = curFeedSteps * FEED_MICROSTEPS;
   // Serial.print(steps);
- // int delayTime = motorPulseDelay - feedSpeed; //assuming a feedspeed variable between 0 and 100. a delay of less than 20ms is too fast so 20mcs should be minimum delay for fastest speed.
-  
+ 
   for(int i=0;i<steps;i++){
       digitalWrite(FEED_STEPPIN, HIGH);
-      delayMicroseconds(60);   //pulse. i have found 60 to be very consistent with tb6600. Noticed that faster pulses tend to drop steps. 
+      delayMicroseconds(pulsewidth);   //pulse. i have found 60 to be very consistent with tb6600. Noticed that faster pulses tend to drop steps. 
       digitalWrite(FEED_STEPPIN, LOW);
       delayMicroseconds(feedMotorSpeed); //speed 156 = 1 second per revolution
   }
@@ -235,10 +255,9 @@ void runFeedMotorManual(){
 
 void runFeedMotor(int steps){
   digitalWrite(FEED_DIRPIN, LOW);
- // int delayTime = motorPulseDelay - feedSpeed; //assuming a feedspeed variable between 0 and 100. a delay of less than 20ms is too fast so 20mcs should be minimum delay for fastest speed.
   for(int i=0;i<steps;i++){
       digitalWrite(FEED_STEPPIN, HIGH);
-      delayMicroseconds(60);   //pulse. i have found 60 to be very consistent with tb6600. Noticed that faster pulses tend to drop steps. 
+      delayMicroseconds(pulsewidth);   //pulse. i have found 60 to be very consistent with tb6600. Noticed that faster pulses tend to drop steps. 
       digitalWrite(FEED_STEPPIN, LOW);
       delayMicroseconds(feedMotorSpeed); //speed 156 = 1 second per revolution
   }
@@ -248,21 +267,96 @@ void runFeedMotor(int steps){
 
 void runSortMotorManual(int steps){
 
+  bool forward=true; 
   if(steps>0){
     digitalWrite(SORT_DIRPIN, LOW);
   }else{
     digitalWrite(SORT_DIRPIN, HIGH);
+    forward=false;
   }
   steps = abs(steps) ;
   for(int i=0;i<steps;i++){
       digitalWrite(SORT_STEPPIN, HIGH);
-      delayMicroseconds(60);   //pulse //def 60
+      delayMicroseconds(pulsewidth);   //pulse //def 60
       digitalWrite(SORT_STEPPIN, LOW);
       delayMicroseconds(sorterMotorSpeed); //speed 156 = 1 second per revolution //def 20
+
+      if(forward){
+      stepTracker++;
+      }else{
+        stepTracker--;
+      }
   }
+ 
 }
 
+void runSortMotorManualAcc(int steps){
 
+ if(steps==0)
+   return;
+  bool forward=true; 
+  if(steps>0){
+    digitalWrite(SORT_DIRPIN, LOW);
+  }else{
+    digitalWrite(SORT_DIRPIN, HIGH);
+    forward=false;
+  }
+  delay(5);
+
+  steps = abs(steps);
+
+ int fullspeedsteps = steps - downslope - upslope;
+//accelerate linear
+ for(int i=1;i<=upslope;i++){
+
+      int msdelay = accelerationFactor - (i*rampFactor);
+      if(msdelay<sorterMotorSpeed){
+           msdelay=sorterMotorSpeed;
+      }
+      digitalWrite(SORT_STEPPIN, HIGH);
+      delayMicroseconds(pulsewidth);   //pulse //def 60
+      digitalWrite(SORT_STEPPIN, LOW);
+      delayMicroseconds(msdelay); //speed 156 = 1 second per revolution //def 20
+
+      if(forward){
+      stepTracker++;
+      }else{
+        stepTracker--;
+      }
+  }
+
+  //full speed
+  for(int i=1;i<=fullspeedsteps;i++){
+      digitalWrite(SORT_STEPPIN, HIGH);
+      delayMicroseconds(pulsewidth);   //pulse //def 60
+      digitalWrite(SORT_STEPPIN, LOW);
+      delayMicroseconds(sorterMotorSpeed); //speed 156 = 1 second per revolution //def 20
+      if(forward){
+      stepTracker++;
+      }else{
+        stepTracker--;
+      }
+  }
+
+  //Deaccelerate linear
+ for(int i=1;i<=downslope;i++){
+       int msdelay = sorterMotorSpeed + (i*rampFactor);
+      if(msdelay >=sorterMotorSpeed){
+           msdelay=accelerationFactor;
+      }
+      digitalWrite(SORT_STEPPIN, HIGH);
+      delayMicroseconds(pulsewidth);   //pulse //def 60
+      digitalWrite(SORT_STEPPIN, LOW);
+      delayMicroseconds(msdelay); //speed 156 = 1 second per revolution //def 20
+
+      if(forward){
+      stepTracker++;
+      }else{
+        stepTracker--;
+      }
+  }
+ 
+}
 
 void setSorterMotorSpeed(int speed){
    sorterMotorSpeed = setSpeedConversion(speed);
@@ -340,19 +434,52 @@ bool parseSerialInput(String input)
             Serial.print(a);
             Serial.print(" - ");
             Serial.print(slot);
-          //  dropTimerDiff = millis() - dropTimer;
             runSorterMotor(slot);
-          //  dropTimer = millis();
             runFeedMotorManual();
             checkHoming(true);
+            feedDone();
             Serial.print("\n");
-            delay(60);
+            delay(sortTestDelay);
          
          }
          Serial.print("ok\n");
          return true;
       }
       
+
+       //used to test tracking on steppers for feed motor. specify the number of feeds to perform: eg:  "test:60" will feed 60 times. 
+       if(input.startsWith("sorttest:")){
+         input.replace("sorttest:","");
+         int testcount = input.toInt();
+         int slot=0;
+         int cslot=0;
+         
+         for(int a=0;a<=testcount;a++)
+         {
+           if(a==testcount){
+             runSorterMotor(0);
+             continue;
+           }
+           
+            slot=random(0,8);
+            while(slot==cslot){
+              slot=random(0,8);
+            }
+            
+            cslot=slot;
+            Serial.print(a);
+            Serial.print(" - ");
+            Serial.print(slot);
+            Serial.print("\n");
+            runSorterMotor(slot);
+            delay(sortTestDelay);
+         }
+         
+         
+         runSorterMotor(0);
+         Serial.print("ok\n");
+         return true;
+      }
       //set sort speed. Values 1-100. Def 60
       if(input.startsWith("sortspeed:")){
          input.replace("sortspeed:","");
@@ -374,14 +501,6 @@ bool parseSerialInput(String input)
       if(input.startsWith("feedsteps:")){
          input.replace("feedsteps:","");
          feedSteps= input.toInt();
-          Serial.print("ok\n");
-         return true;
-      }
-
-      //set feed steps. Values 1-1000. Def 100
-      if(input.startsWith("feedpausetime:")){
-         input.replace("feedpausetime:","");
-         feedPauseTime= input.toInt();
           Serial.print("ok\n");
          return true;
       }
