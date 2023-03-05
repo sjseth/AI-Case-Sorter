@@ -1,0 +1,19 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "c:\\\\Program Files (x86)\\\\Arduino\\\\**",
+                "c:\\\\Program Files (x86)\\\\Arduino\\\\hardware\\\\arduino\\\\avr\\\\**",
+                "c:\\\\Program Files (x86)\\\\Arduino\\\\hardware\\\\tools\\\\avr\\\\avr\\\\**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ]
+        }
+    ],
+    "version": 4
+}
