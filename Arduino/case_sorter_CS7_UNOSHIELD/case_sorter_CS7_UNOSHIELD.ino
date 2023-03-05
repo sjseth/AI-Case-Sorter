@@ -62,10 +62,10 @@ int pulsewidth = 10;  //this is used by both feed and sort motors to set the pul
 int sorterQueue[QUEUE_LENGTH];
 
 //inputs which can be set via serial console like:  feedspeed:50 or sortspeed:60
-int feedSpeed = 95;  //range: 1..100
+int feedSpeed = 90;  //range: 1..100
 int feedSteps = 60;  //range 1..1000
 
-int sortSpeed = 95;     //range: 1..100
+int sortSpeed = 90;     //range: 1..100
 int sortSteps = 20;     //range: 1..500 //20 default
 int feedPauseTime = 0;  //range: 1.2000 //if you feed has two parts (back, forth), this is the pause time between the two parts.
 
