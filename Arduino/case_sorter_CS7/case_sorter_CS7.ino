@@ -102,7 +102,8 @@ void setup() {
   digitalWrite(FEED_Enable, HIGH);
   digitalWrite(SORT_Enable, HIGH);
   digitalWrite(FEED_DIRPIN, HIGH);
-
+  digitalWrite(TBPOWERPIN, HIGH);
+  
   if(homeSorterOnStartup){
        checkSorterHoming(false);
   }
