@@ -1,4 +1,4 @@
-/// Version CS 7.0.230305.1-US ///
+/// Version CS 7.0.230306.1-US ///
 
 #include <Wire.h>
 #include <SoftwareSerial.h>
@@ -135,7 +135,7 @@ void loop() {
     runFeedMotorManual();
     checkFeedHoming(true);
     feedDone();
-    //delay(50);  //allow for vibrations to calm down for clear picture
+    delay(30);  //allow for vibrations to calm down for clear picture
     Serial.print("done\n");
     PrintQueue();
   }
