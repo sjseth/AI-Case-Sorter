@@ -74,7 +74,10 @@ void setup() {
   
   setSorterMotorSpeed(sortSpeed);
     setFeedMotorSpeed(feedSpeed);
-    
+  
+  pinMode(TBPOWERPIN, OUTPUT);
+  digitalWrite(TBPOWERPIN, HIGH);
+  
   pinMode(FEED_Enable, OUTPUT);
   pinMode(SORT_Enable, OUTPUT);
   pinMode(FEED_DIRPIN, OUTPUT);
