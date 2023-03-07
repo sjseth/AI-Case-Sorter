@@ -1,0 +1,7 @@
+{
+    "configuration": "cpu=atmega328old",
+    "board": "arduino:avr:nano",
+    "sketch": "case_sorter_CS7\\case_sorter_CS7.ino",
+    "programmer": "avrisp",
+    "port": "COM6"
+}
