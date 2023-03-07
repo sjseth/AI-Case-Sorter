@@ -1,0 +1,6 @@
+{
+    "configuration": "cpu=atmega328old",
+    "board": "arduino:avr:nano",
+    "programmer": "avrisp",
+    "sketch": "Arduino\\case_sorter_CS7\\case_sorter_CS7.ino"
+}
