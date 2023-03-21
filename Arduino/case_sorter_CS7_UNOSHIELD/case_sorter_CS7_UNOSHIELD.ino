@@ -1,4 +1,4 @@
-/// Version CS 7.0.230306.1-US ///
+/// Version CS 7.0.230321.1-US ///
 
 #include <Wire.h>
 #include <SoftwareSerial.h>
@@ -393,6 +393,21 @@ bool parseSerialInput(String input) {
     return false;
   }
 
+ if (input.startsWith("xf:")) {
+    input.replace("xf:", "");
+    int sortPosition = input.toInt();
+    QueueAdd(sortPosition);
+    runSorterMotor(QueueFetch());
+     useFeedSensor = false;
+    runFeedMotorManual();
+    checkFeedHoming(true);
+    feedDone();
+    useFeedSensor = FEEDSENSOR_ENABLED;
+    delay(20);  //allow for vibrations to calm down for clear picture
+    Serial.print("done\n");
+    return true;
+  }
+  
   if (input.startsWith("usefeedsensor:")) {
     input.replace("usefeedsensor:", "");
     useFeedSensor = false;
