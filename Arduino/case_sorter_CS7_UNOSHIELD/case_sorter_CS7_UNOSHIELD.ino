@@ -1,4 +1,4 @@
-/// Version CS 7.0.230321.1-US ///
+/// Version CS 7.0.230321.2-US ///
 
 #include <Wire.h>
 #include <SoftwareSerial.h>
