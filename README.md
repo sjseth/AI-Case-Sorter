@@ -1,4 +1,21 @@
-# AI-Case-Sorter
+
+# Important: An update to this project is coming soon and this repo will be retired. 
+
+## If you are thinking of starting on this project, please go to the CS7.1 Repo and start with the Instructions.pdf file. 
+
+(CS7.1 Repo)[https://github.com/sjseth/AI-Case-Sorter-CS7.1]
+
+
+(CS7.1 Instructions)[https://github.com/sjseth/AI-Case-Sorter-CS7.1/blob/12b74c1f0a16aa015d7ec6fccc47490c912a801d/Instructions.pdf]
+
+
+# 
+#
+
+
+
+
+# AI-Case-Sorter ARCHIVE
 This project contains the assets and resources for creating the AI Case sorter project as seen at: https://youtu.be/KBhd5qHZM7I
 
 # Build Videos
