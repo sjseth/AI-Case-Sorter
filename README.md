@@ -1,7 +1,7 @@
 
-# Important: An update to this project is coming soon and this repo will be retired. 
+# Important: This version of the project has been "retired"
 
-## If you are thinking of starting on this project, please go to the CS7.1 Repo and start with the Instructions.pdf file. 
+## If you are thinking of starting on this project, please go to the latest version of the project CS7.1 Repo and start with the Instructions.pdf file. 
 
 (CS7.1 Repo)[https://github.com/sjseth/AI-Case-Sorter-CS7.1]
 
